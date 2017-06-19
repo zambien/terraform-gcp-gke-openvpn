@@ -1,0 +1,44 @@
+#!/bin/bash
+
+# Server name is in the form "udp://vpn.example.com:1194"
+if [[ "$OVPN_SERVER_URL" =~ ^((udp|tcp)://)?([0-9a-zA-Z\.\-]+)(:([0-9]+))?$ ]]; then
+    OVPN_PROTO=${BASH_REMATCH[2]};
+    OVPN_CN=${BASH_REMATCH[3]};
+    OVPN_PORT=${BASH_REMATCH[5]};
+else
+    echo "Need to pass in OVPN_SERVER_URL in 'proto://fqdn:port' format"
+    exit 1
+fi
+
+cd "$EASYRSA_PKI"
+
+if [ -e crl.pem ]; then
+    cat ca.crt crl.pem > cacheck.pem
+fi
+
+echo "name,begin,end,status"
+for name in issued/*.crt; do
+    path=$name
+    begin=$(openssl x509 -noout -startdate -in $path | awk -F= '{ print $2 }')
+    end=$(openssl x509 -noout -enddate -in $path | awk -F= '{ print $2 }')
+
+    name=${name%.crt}
+    name=${name#issued/}
+    if [ "$name" != "$OVPN_" ]; then
+    if [ -e crl.pem ]; then
+        if openssl verify -crl_check -CAfile cacheck.pem $path &> /dev/null; then
+	status="VALID"
+        else
+	status="REVOKED"
+        fi
+    else
+        status="VALID"
+    fi
+
+        echo "$name,$begin,$end,$status"
+    fi
+done
+
+if [ -e crl.pem ]; then
+    rm cacheck.pem
+fi
