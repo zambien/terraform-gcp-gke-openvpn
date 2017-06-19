@@ -1,0 +1,6 @@
+ovpn
+.idea
+.terraform
+*.iml
+*.tfstate*
+*.tfvars
