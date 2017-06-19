@@ -1,3 +1,6 @@
+pki
+*.pem
+kubeconfig
 ovpn
 .idea
 .terraform

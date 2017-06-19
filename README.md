@@ -58,19 +58,14 @@ sudo apt-get install gcsfuse
 Mount:
 ```
 mkdir -p ~/gcsmount
-GOOGLE_APPLICATION_CREDENTIALS=~/.gcp/terraform-gcp-openvpn.json gcsfuse openvpn-gcp-bucket /home/vagrant/gcsmount
+export GOOGLE_APPLICATION_CREDENTIALS=~/.gcp/terraform-gcp-openvpn.json && gcsfuse openvpn-gcp-bucket /home/vagrant/gcsmount
 ```
 
 ### Terraform
 
-First initialize the project and the remote state:
+Run Terraform to set everything up.  The first time you will be asked for a username and password for your Kubernetes cluster which is where the VPN will actually run.
 
-```
-terraform init \
-      -backend-config="bucket=openvpn-terraform-state" \
-      -backend-config="path=openvpn/terraform.tfstate" \
-      -backend-config="credentials=~/.gcp/terraform-gcp-openvpn.json"
-```
+`./tf.sh apply`
 
 ### kubernetes
 
@@ -82,7 +77,12 @@ Things are kind of fragmented with Terraform and GKE right now.  So some command
 
 
 ```
-kubectl run terraform-gke-openvpn --image=kylemanna/openvpn
+docker run -v $OVPN_DATA:/etc/openvpn -d -p 1194:1194/udp --cap-add=NET_ADMIN kylemanna/openvpn
+```
+
+
+```
+sed "s/\${OVPN_CN}/$OVPN_CN/g;" k8s/deployment.yaml | kubectl create --namespace=$namespace -f -
 ```
 
 Get a static IP:
@@ -109,7 +109,7 @@ kubectl create -f k8s/terraform-gke-openvpn-ing.yaml
 
 IP_ADDR=`gcloud compute addresses describe terraform-gcp-openvpn-ingress --global --format='value(address)'`
 
-Note:  We use kylemanna's openvpn docker container as it is very secure and reliable. More here:
+Note:  We extend kylemanna's openvpn docker container as it is very secure and reliable. More here:
 
 https://github.com/kylemanna/docker-openvpn
 
@@ -120,7 +120,7 @@ docker volume create --name $OVPN_DATA
 mkdir -p ovpn
 
 docker run -v ${PWD}/ovpn:/etc/openvpn --rm kylemanna/openvpn ovpn_genconfig -u udp://$IP_ADDR:1194
-docker run -v ${PWD}/ovpn:/etc/openvpn --rm -it kylemanna/openvpn ovpn_initpki
+docker run -v ${PWD}/ovpn:/etc/openvpn --rm -it kylemanna/openvpn ovpn_initpki nopass
 cp -r ${PWD}/ovpn/* ~/gcsmount
 
 
