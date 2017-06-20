@@ -38,6 +38,3 @@ COPY openvpn.tmpl $OVPN_TEMPLATE
 #ADD ./otp/openvpn /etc/pam.d/
 
 CMD ["/sbin/entrypoint.sh"]
-
-RUN apk add --no-cache ca-certificates fuse && rm -rf /tmp/*
-ADD bin/gcsfuse /usr/local/bin
