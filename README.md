@@ -1,4 +1,4 @@
-# terraform-gcp-openvpn
+# terraform-gcp-gke-openvpn
 Module for OpenVPN via Terraform in Google Cloud Platform using GKE (Kubernetes)
 
 ## Intro
