@@ -52,6 +52,12 @@ OVPN_NETWORK_ROUTE=$(getroute ${OVPN_NETWORK})
 
 envsubst < $OVPN_TEMPLATE > $OVPN_CONFIG
 
+if [ $OVPN_DEFROUTE -gt 0 ]; then
+    iptables -t nat -C POSTROUTING -s $OVPN_SERVER -o $OVPN_NATDEVICE -j MASQUERADE || {
+      iptables -t nat -A POSTROUTING -s $OVPN_SERVER -o $OVPN_NATDEVICE -j MASQUERADE
+    }
+fi
+
 # Use client configuration directory if it exists.
 if [ -d "$OVPN_CCD" ]; then
     addArg "--client-config-dir" "$OVPN_CCD"
