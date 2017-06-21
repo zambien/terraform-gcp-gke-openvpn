@@ -1,0 +1,13 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: terraform-gke-openvpn
+  annotations:
+    kubernetes.io/ingress.global-static-ip-name: "openvpn-ingress"
+spec:
+  #tls:
+  # This assumes tls-secret exists.
+  #- secretName: foo-secret
+  backend:
+    serviceName: terraform-gke-openvpn
+    servicePort: 1194

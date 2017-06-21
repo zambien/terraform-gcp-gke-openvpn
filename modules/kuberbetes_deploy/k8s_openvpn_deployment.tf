@@ -16,40 +16,53 @@ variable "endpoint_server" {
   description = "The address and port of the deployment endpoint"
 }
 
-variable "configuration" {
-  description = "The configuration that should be applied"
+variable "secret_uid" {
+  description = "We don't actually need this... we pretend we do so that this module waits for secrets to be created."
 }
 
 variable "cluster_ca_certificate" {}
 
 data "template_file" "template_deployment_yaml" {
-  template = "${file("k8s/deployment.yaml.tpl")}"
+  template = "${file("${path.module}/deployment.yaml.tpl")}"
 
   vars {
     OVPN_CN         = "${var.endpoint_server}"
-    OVPN_SERVER_URL = "${var.endpoint_server}"
+    OVPN_SERVER_URL = "tcp://${var.endpoint_server}:1194"
   }
 }
 
-resource "null_resource" "kubernetes_resource" {
+resource "null_resource" "kubernetes_deployments" {
+
   provisioner "local-exec" {
-    command = "kubectl delete --context=${var.cluster_server} -f - <<EOF\n${var.configuration}\nEOF"
+    command = "kubectl delete service terraform-gke-openvpn"
     when    = "destroy"
   }
+
+  provisioner "local-exec" {
+    command = "sleep 10 && kubectl delete -f - <<EOF\n${data.template_file.template_deployment_yaml.rendered}\nEOF"
+    when    = "destroy"
+  }
+
+  /*
+  provisioner "local-exec" {
+    command = "kubectl delete -f - <<EOF\n${file("${path.module}/static-ip-ingress.yaml")}\nEOF"
+    when    = "destroy"
+  }*/
 
   triggers {
     configuration = "${data.template_file.template_deployment_yaml.rendered}"
   }
 
   provisioner "local-exec" {
-    command = "touch ${path.module}/kubeconfig"
+    command = "echo ${var.secret_uid} && kubectl create -f - <<EOF\n${data.template_file.template_deployment_yaml.rendered}\nEOF"
   }
 
   provisioner "local-exec" {
-    command = "echo '${var.cluster_ca_certificate}' > ${path.module}/ca.pem"
+      command = "sleep 10 && kubectl expose deployment terraform-gke-openvpn --name=terraform-gke-openvpn --type=LoadBalancer --protocol=TCP --port=80 --target-port=1194"
   }
 
+  /*
   provisioner "local-exec" {
-    command = "kubectl apply --kubeconfig=${path.module}/kubeconfig --server=${var.cluster_server} --certificate-authority=${path.module}/ca.pem --username=${var.username} --password=${var.password} -f - <<EOF\n${data.template_file.template_deployment_yaml.rendered}\nEOF"
-  }
+    command = "echo ${var.secret_uid} && kubectl create -f - <<EOF\n${file("${path.module}/static-ip-ingress.yaml")}\nEOF"
+  }*/
 }

@@ -1,7 +1,6 @@
 pki
 *.pem
-kubeconfig
-ovpn
+*.ovpn
 .idea
 .terraform
 *.iml

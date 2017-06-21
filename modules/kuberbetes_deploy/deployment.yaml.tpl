@@ -15,9 +15,15 @@ spec:
       containers:
       - name: terraform-gke-openvpn
         image: zambien/terraform-gcp-openvpn
+        tty: true
+        stdin: true
         env:
         - name: OVPN_SERVER_URL
           value: ${OVPN_SERVER_URL}
+        - name: OVPN_DEFROUTE
+          value: "1"
+        - name: DEBUG
+          value: "1"
         securityContext:
           capabilities:
             add:
