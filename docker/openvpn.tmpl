@@ -14,6 +14,10 @@ keepalive 10 60
 persist-key
 persist-tun
 push "block-outside-dns"
+push "dhcp-option DNS 8.8.8.8"
+push "dhcp-option DNS 8.8.4.4"
+
+route 192.168.254.0 255.255.255.0
 
 proto ${OVPN_PROTO}
 cipher ${OVPN_CIPHER}
