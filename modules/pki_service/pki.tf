@@ -1,7 +1,7 @@
 variable endpoint_server {}
 
 # Create the pki
-resource null_resource "deprovision_pki" {
+resource null_resource "provision_pki" {
   provisioner "local-exec" {
     command = "${path.module}/create_pki.sh ${var.endpoint_server}"
   }
@@ -14,7 +14,7 @@ resource null_resource "deprovision_pki" {
 
 # bash shell microservice returns pki information
 data "external" "pki" {
-  depends_on = ["null_resource.deprovision_pki"]
+  depends_on = ["null_resource.provision_pki"]
   program = ["bash", "${path.module}/pki_service.sh"]
 
   query = {

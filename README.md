@@ -3,7 +3,13 @@ Module for OpenVPN via Terraform in Google Cloud Platform using GKE (Kubernetes)
 
 ## Intro
 
-This repo is a practical implementation containing everything needed to stand up a personal VPN for free.  Google Cloud Platform (GCP) offers an attractive always free tier that makes the idea of standing up a personal VPN appealing.  I became interested in using GCP for this a few months back and finally had some time to carve off to play around with this.
+This repo is a practical implementation containing everything needed to stand up a personal VPN on Google Cloud with GKE/Kubernetes.  Google Cloud Platform (GCP) offers an attractive always free tier that makes the idea of learning their stack appealing.  I became interested in using GCP for a free personal VPN a few months back and finally had some time to carve off to play around with this.
+
+#### Lessons Learned
+
+Using Kubernetes and the always free tier is a mixed bag.  You are charged for the nodes you run.  You will also be charged for load balancing generally in GPC.  A cheaper option may be to simply use google compute for a single personal VPN instance and I'll explore that next in a different repo.
+
+The terraform provider for kubernetes is very green.  As such only non-beta APIs are supported so you will find that you end up using kubectl commands for some things via a null resource.  See the module for an example of this.
 
 ## Instructions
 
@@ -70,22 +76,30 @@ To see what will be created:
 
    Note, there is code in the project to do this automatically but currently this is not allowed by Google so you will see a failure if you don't do this manually.
 
-2.  Setup our pki:
-`terraform apply -target="module.pki" -var-file=env.tfvars`
+2.  Create the cluster first so that we can authenticate with kubernetes.
+`terraform apply -target="google_container_cluster.openvpn_cluster" -var-file=env.tfvars`
 
 3.  Configure auth:
 ```
-gcloud auth login
 gcloud container clusters get-credentials openvpn--cluster --zone us-east1-b --project terraform-gcp-openvpn
 kubectl get po # Seems to be neccessary to bootstrap access between kube and GCP.  Weird.
 ```
 
-4.  Deploy the VPN:
+4.  Deploy the remaining components:
 `terraform apply -var-file=env.tfvars`
 
-After the apply finishes wait a minute or so and get your external IP address
+After the apply finishes wait a minute or so and get your external IP address.
+
 
 `kubectl get svc`
+
+You will see this line:
+
+```
+terraform-gke-openvpn   10.7.240.194   <pending>     80:30662/TCP   3m
+```
+
+After a minute or so pending will become an IP address.  That is your VPN endpoint for your client.
 
 ### VPN Clients
 
@@ -102,6 +116,8 @@ docker run --user=$(id -u) -e OVPN_DEFROUTE=1 -e OVPN_SERVER_URL=tcp://$INGRESS_
 ```
 
 #### Remove the infrastructure
+
+At some point you may want to clean this up so it isn't provisioned anymore.  Run:
 
 `terraform destroy -var-file=env.tfvars`
 

@@ -90,12 +90,12 @@ module "kubernetes_openvpn_deployment" {
   endpoint_server        = "${google_compute_global_address.openvpn_ingress.address}"
   username               = "${var.cluster_master_username}"
   password               = "${var.cluster_master_password}"
-  cluster_ca_certificate = "${module.pki.ca_crt}"
+  cluster_ca_certificate = "${module.pki_service.ca_crt}"
   secret_uid             = "${kubernetes_secret.openvpn_pki.id}}"
 }
 
-module "pki" {
-  source          = "modules/pki"
+module "pki_service" {
+  source          = "modules/pki_service"
   endpoint_server = "${google_compute_global_address.openvpn_ingress.address}"
 }
 
@@ -137,11 +137,11 @@ resource "kubernetes_secret" "openvpn_pki" {
   }
 
   data {
-    private.key     = "${module.pki.private_key}"
-    ca.crt          = "${module.pki.ca_crt}"
-    certificate.crt = "${module.pki.certificate_crt}"
-    dh.pem          = "${module.pki.dh_pem}"
-    ta.key          = "${module.pki.ta_key}"
+    private.key     = "${module.pki_service.private_key}"
+    ca.crt          = "${module.pki_service.ca_crt}"
+    certificate.crt = "${module.pki_service.certificate_crt}"
+    dh.pem          = "${module.pki_service.dh_pem}"
+    ta.key          = "${module.pki_service.ta_key}"
   }
 
   type = "Opaque"
