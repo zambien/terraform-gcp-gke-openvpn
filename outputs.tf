@@ -2,9 +2,10 @@ output "gke.openvpn_cluster.endpoint" {
   value = "${google_container_cluster.openvpn_cluster.endpoint}"
 }
 
+/*
 output "openvpn_host" {
   value = "${google_compute_global_address.openvpn_ingress.address}"
-}
+}*/
 
 /* We probably don't need to output these all the time but they are here for debugging
 output "ca_crt" {

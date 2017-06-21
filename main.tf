@@ -10,6 +10,10 @@ variable "region" {
   default = "us-east1"
 }
 
+variable "endpoint_cn" {
+  default = "vpn.my.com"
+}
+
 variable "cluster_master_username" {}
 variable "cluster_master_password" {}
 
@@ -79,15 +83,17 @@ resource "google_container_cluster" "openvpn_cluster" {
   }
 }
 
+/*
 resource "google_compute_global_address" "openvpn_ingress" {
   name    = "${var.prefix}-ingress"
   project = "${var.google_project}"
-}
+}*/
 
 module "kubernetes_openvpn_deployment" {
   source                 = "modules/kuberbetes_deploy"
   cluster_server         = "${google_container_cluster.openvpn_cluster.endpoint}"
-  endpoint_server        = "${google_compute_global_address.openvpn_ingress.address}"
+  # endpoint_server        = "${google_compute_global_address.openvpn_ingress.address}"
+  endpoint_server        = "${var.endpoint_cn}"
   username               = "${var.cluster_master_username}"
   password               = "${var.cluster_master_password}"
   cluster_ca_certificate = "${module.pki_service.ca_crt}"
@@ -96,7 +102,8 @@ module "kubernetes_openvpn_deployment" {
 
 module "pki_service" {
   source          = "modules/pki_service"
-  endpoint_server = "${google_compute_global_address.openvpn_ingress.address}"
+  #endpoint_server = "${google_compute_global_address.openvpn_ingress.address}"
+  endpoint_server = "${var.endpoint_cn}"
 }
 
 /* This does not currently work correctly.

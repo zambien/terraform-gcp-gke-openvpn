@@ -115,6 +115,8 @@ export INGRESS_IP_ADDRESS=<YOUR_EXTERNAL_IP_ADDRESS>
 docker run --user=$(id -u) -e OVPN_DEFROUTE=1 -e OVPN_SERVER_URL=tcp://$INGRESS_IP_ADDRESS:80 -v $PWD:/etc/openvpn --rm ptlange/openvpn ovpn_getclient CLIENTNAME > CLIENTNAME.ovpn
 ```
 
+If you are pretty fast with this it may take a few minutes for the load balancer to get setup.  I've seen it take up to 30 minutes.  You can check the google console for networking to see what the status is.  If you can't ping it, you can't connect. :)
+
 #### Remove the infrastructure
 
 At some point you may want to clean this up so it isn't provisioned anymore.  Run:
